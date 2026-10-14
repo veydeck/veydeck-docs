@@ -1,0 +1,355 @@
+openapi: 3.1.0
+info:
+  title: Veydeck Agent API
+  version: 0.1.0-alpha.1
+  description: 通过 Master `/api/v1/agent/**` 代理访问的 Agent 接口。
+servers:
+  - url: /api/v1/agent
+tags:
+  - name: Docker 查询
+  - name: Docker 操作
+  - name: Docker 日志
+  - name: 套件运行时
+  - name: WebSocket
+paths:
+  /docker/info:
+    get:
+      operationId: veydeckAgentDockerInfo
+      tags: [Docker 查询]
+      summary: 获取 Docker 系统信息
+      responses:
+        '200': { description: 返回 Docker 系统信息, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck: { owner: veydeck, layer: agent, lifecycle: active, implementationStatus: unverified, source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/mod.rs }, designDocs: [], reviewedAt: null, notes: '' }
+  /docker/overview/realtime:
+    post:
+      operationId: veydeckAgentDockerOverviewRealtime
+      tags: [Docker 查询]
+      summary: 获取 Docker 实时概览
+      responses:
+        '200': { description: 返回容器、镜像和项目概览, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck: { owner: veydeck, layer: agent, lifecycle: active, implementationStatus: unverified, source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/mod.rs }, designDocs: [], reviewedAt: null, notes: 需要核对复杂查询是否仍应使用 POST。 }
+  /docker/containers:
+    get:
+      operationId: veydeckAgentDockerContainersList
+      tags: [Docker 查询]
+      summary: 查询全部容器
+      responses:
+        '200': { description: 返回容器列表, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck: { owner: veydeck, layer: agent, lifecycle: active, implementationStatus: unverified, source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/containers.rs }, designDocs: [], reviewedAt: null, notes: '' }
+  /docker/compose/containers:
+    get:
+      operationId: veydeckAgentDockerComposeContainersList
+      tags: [Docker 查询]
+      summary: 查询 Compose 容器
+      responses:
+        '200': { description: 返回 Compose 管理的容器列表, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck: { owner: veydeck, layer: agent, lifecycle: active, implementationStatus: unverified, source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/containers.rs }, designDocs: [], reviewedAt: null, notes: '' }
+  /docker/images:
+    get:
+      operationId: veydeckAgentDockerImagesList
+      tags: [Docker 查询]
+      summary: 查询镜像
+      responses:
+        '200': { description: 返回镜像列表, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck: { owner: veydeck, layer: agent, lifecycle: active, implementationStatus: unverified, source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/images.rs }, designDocs: [], reviewedAt: null, notes: '' }
+  /docker/networks:
+    get:
+      operationId: veydeckAgentDockerNetworksList
+      tags: [Docker 查询]
+      summary: 查询 Docker 网络
+      responses:
+        '200': { description: 返回网络列表, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck: { owner: veydeck, layer: agent, lifecycle: active, implementationStatus: unverified, source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/networks.rs }, designDocs: [], reviewedAt: null, notes: '' }
+  /docker/volumes:
+    get:
+      operationId: veydeckAgentDockerVolumesList
+      tags: [Docker 查询]
+      summary: 查询 Docker 卷
+      responses:
+        '200': { description: 返回卷列表, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck: { owner: veydeck, layer: agent, lifecycle: active, implementationStatus: unverified, source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/volumes.rs }, designDocs: [], reviewedAt: null, notes: '' }
+  /docker/sdu:
+    get:
+      operationId: veydeckAgentDockerDiskUsage
+      tags: [Docker 查询]
+      summary: 获取 Docker 逻辑磁盘占用
+      responses:
+        '200': { description: 返回 Docker 逻辑磁盘总占用量, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck: { owner: veydeck, layer: agent, lifecycle: active, implementationStatus: unverified, source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/system.rs }, designDocs: [], reviewedAt: null, notes: '' }
+  /docker/action:
+    post:
+      operationId: veydeckAgentDockerAction
+      tags: [Docker 操作]
+      summary: 执行 Docker 对象操作
+      description: 当前文档记录可执行 start、stop、restart 和 remove。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DockerActionRequest' }
+      responses:
+        '200': { description: 操作已执行, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+        '400': { description: 操作或目标不合法, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck:
+        owner: veydeck
+        layer: agent
+        lifecycle: active
+        implementationStatus: unverified
+        source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/containers.rs }
+        designDocs: []
+        reviewedAt: null
+        notes: 当前实现主要依赖 name 字段，需要治理对象类型和动作语义。
+  /docker/logs:
+    post:
+      operationId: veydeckAgentDockerLogsQuery
+      tags: [Docker 日志]
+      summary: 查询 Agent Docker 操作日志
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LogQuery' }
+      responses:
+        '200': { description: 返回 Docker 模块日志分页数据, content: { application/json: { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+      x-veydeck: { owner: veydeck, layer: agent, lifecycle: active, implementationStatus: unverified, source: { repository: veydeck, file: crates/veydeck-agent/src/api/docker/mod.rs }, designDocs: [standards/Veydeck平台日志设计规范.md], reviewedAt: null, notes: '' }
+  /suite-runtime/workloads:
+    post:
+      operationId: veydeckAgentSuiteRuntimeWorkloadStart
+      tags: [套件运行时]
+      summary: 创建当前套件实例的受控 workload
+      description: 镜像必须在套件清单 runtime.images 白名单内，端点以 endpointId 和 TCP/UDP 传输区分。
+      security: [{ SuiteRuntimeBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StartWorkloadRequest' }
+      responses:
+        '200': { description: Workload 已创建并启动, content: { application/json: { schema: { $ref: '#/components/schemas/StartWorkloadResponse' } } } }
+        '400': { description: 请求、镜像或端点不合法 }
+        '403': { description: Runtime 令牌无效或缺少 workloads.manage }
+        '409': { description: 宿主机端口不可用 }
+      x-veydeck: &suiteWorkloadGovernance
+        owner: veydeck
+        layer: agent
+        lifecycle: active
+        implementationStatus: verified
+        source: { repository: veydeck, file: crates/veydeck-agent/src/api/suite_workloads.rs }
+        designDocs: [suites/Veydeck套件SDK设计规范.md, simulation/Veydeck协议仿真模块设计规范.md]
+        reviewedAt: '2026-08-11'
+        notes: 套件和实例身份由 Runtime 令牌恢复。
+    get:
+      operationId: veydeckAgentSuiteRuntimeWorkloadsList
+      tags: [套件运行时]
+      summary: 查询当前套件实例的 workload
+      security: [{ SuiteRuntimeBearer: [] }]
+      responses:
+        '200':
+          description: 只返回当前实例拥有的 workload
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/WorkloadSummary' } }
+        '403': { description: Runtime 令牌无效或缺少 workloads.manage }
+      x-veydeck: *suiteWorkloadGovernance
+  /suite-runtime/workloads/{workload_id}:
+    get:
+      operationId: veydeckAgentSuiteRuntimeWorkloadDetail
+      tags: [套件运行时]
+      summary: 获取当前套件实例的 workload 容器详情
+      security: [{ SuiteRuntimeBearer: [] }]
+      parameters:
+        - $ref: '#/components/parameters/WorkloadId'
+      responses:
+        '200': { description: 返回 Docker 容器检查结果, content: { application/json: { schema: { type: object, additionalProperties: true } } } }
+        '403': { description: Runtime 令牌无效或缺少 workloads.manage }
+        '404': { description: Workload 不存在或不属于当前实例 }
+      x-veydeck: *suiteWorkloadGovernance
+    delete:
+      operationId: veydeckAgentSuiteRuntimeWorkloadDelete
+      tags: [套件运行时]
+      summary: 删除当前套件实例的 workload
+      security: [{ SuiteRuntimeBearer: [] }]
+      parameters:
+        - $ref: '#/components/parameters/WorkloadId'
+      responses:
+        '200': { description: Workload 已删除, content: { application/json: { schema: { $ref: '#/components/schemas/DeleteWorkloadResponse' } } } }
+        '403': { description: Runtime 令牌无效或缺少 workloads.manage }
+        '404': { description: Workload 不存在或不属于当前实例 }
+      x-veydeck: *suiteWorkloadGovernance
+  /suite-runtime/workloads/{workload_id}/captures:
+    post:
+      operationId: veydeckAgentSuiteRuntimeCaptureStart
+      tags: [套件运行时]
+      summary: 对 workload 的全部已发布端点开始抓包
+      description: 请求不接收端口或请求体，捕获目标来自 Agent 保存的 workload 实际端点。
+      security: [{ SuiteRuntimeBearer: [] }]
+      parameters:
+        - $ref: '#/components/parameters/WorkloadId'
+      responses:
+        '200': { description: 抓包已开始, content: { application/json: { schema: { $ref: '#/components/schemas/StartCaptureResponse' } } } }
+        '400': { description: Workload 没有可抓取端点或抓包无法启动 }
+        '403': { description: Runtime 令牌无效或缺少 captures.manage }
+        '404': { description: Workload 不存在或不属于当前实例 }
+      x-veydeck: &suiteCaptureGovernance
+        owner: veydeck
+        layer: agent
+        lifecycle: active
+        implementationStatus: verified
+        source: { repository: veydeck, file: crates/veydeck-agent/src/api/suite_workloads.rs }
+        designDocs: [suites/Veydeck套件SDK设计规范.md, simulation/Veydeck交互式PCAP流量取证设计规范.md]
+        reviewedAt: '2026-08-11'
+        notes: 捕获槽按 transport 与 hostPort 区分，支持整 workload 多端点抓包。
+  /suite-runtime/workloads/{workload_id}/captures/{capture_id}/finish:
+    post:
+      operationId: veydeckAgentSuiteRuntimeCaptureFinish
+      tags: [套件运行时]
+      summary: 停止抓包并返回 PCAP 二进制
+      security: [{ SuiteRuntimeBearer: [] }]
+      parameters:
+        - $ref: '#/components/parameters/WorkloadId'
+        - $ref: '#/components/parameters/CaptureId'
+      responses:
+        '200':
+          description: 抓包已停止
+          content:
+            application/vnd.tcpdump.pcap:
+              schema: { type: string, format: binary }
+        '400': { description: Capture 无法停止或所有权不匹配 }
+        '403': { description: Runtime 令牌无效或缺少 captures.manage }
+        '404': { description: Workload 不存在或不属于当前实例 }
+      x-veydeck: *suiteCaptureGovernance
+  /websocket/events/ws:
+    get:
+      operationId: veydeckAgentWebsocketEvents
+      tags: [WebSocket]
+      summary: 建立 Agent 通用事件流
+      description: WebSocket 入口，客户端通过消息订阅或取消订阅容器日志等实时事件。
+      responses:
+        '101': { description: WebSocket 协议升级成功 }
+        '400': { description: WebSocket 升级请求无效 }
+      x-veydeck:
+        owner: veydeck
+        layer: agent
+        lifecycle: active
+        implementationStatus: unverified
+        source: { repository: veydeck, file: crates/veydeck-agent/src/api/websocket.rs }
+        designDocs: [standards/VeydeckWebSocket基础设施设计规范.md]
+        reviewedAt: null
+        notes: OpenAPI 只登记握手入口，消息协议仍需后续独立治理。
+components:
+  securitySchemes:
+    SuiteRuntimeBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Veydeck suite runtime token
+      description: Agent 注入并绑定到套件实例及能力集合的 Bearer token。
+  parameters:
+    WorkloadId:
+      name: workload_id
+      in: path
+      required: true
+      schema: { type: string, pattern: '^workload-[A-Za-z0-9-]+$' }
+    CaptureId:
+      name: capture_id
+      in: path
+      required: true
+      schema: { type: string, pattern: '^pcap-[A-Za-z0-9-]+$' }
+  schemas:
+    ApiResponse:
+      type: object
+      required: [success, code, message]
+      properties:
+        success: { type: boolean }
+        code: { type: integer }
+        message: { type: string }
+        messageKey: { type: [string, 'null'] }
+        errorCode: { type: [string, 'null'] }
+        data: {}
+    DockerActionRequest:
+      type: object
+      required: [id, name, action]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        action: { type: string, enum: [start, stop, restart, remove] }
+    LogQuery:
+      type: object
+      additionalProperties: true
+      properties:
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1 }
+        modules: { type: array, items: { type: string } }
+        statuses: { type: array, items: { type: string } }
+    WorkloadTransport:
+      type: string
+      enum: [tcp, udp]
+    WorkloadPort:
+      type: object
+      additionalProperties: false
+      required: [endpointId, hostPort, containerPort, protocol]
+      properties:
+        endpointId: { type: string, minLength: 1 }
+        hostPort: { type: integer, minimum: 1, maximum: 65535 }
+        containerPort: { type: integer, minimum: 1, maximum: 65535 }
+        protocol: { $ref: '#/components/schemas/WorkloadTransport' }
+    WorkloadResources:
+      type: object
+      additionalProperties: false
+      properties:
+        memoryMb: { type: [integer, 'null'], minimum: 0 }
+        cpuShares: { type: [integer, 'null'], minimum: 0 }
+    StartWorkloadRequest:
+      type: object
+      additionalProperties: false
+      required: [workloadKind, workloadName, image]
+      properties:
+        workloadKind: { type: string, minLength: 1 }
+        workloadName: { type: string, minLength: 1 }
+        image: { type: string, minLength: 1 }
+        ports: { type: array, items: { $ref: '#/components/schemas/WorkloadPort' }, default: [] }
+        env: { type: object, additionalProperties: true, default: {} }
+        configJson: {}
+        resources: { $ref: '#/components/schemas/WorkloadResources' }
+    StartWorkloadResponse:
+      type: object
+      additionalProperties: false
+      required: [workloadId, containerId, status]
+      properties:
+        workloadId: { type: string }
+        containerId: { type: string }
+        status: { type: string }
+    WorkloadSummary:
+      type: object
+      additionalProperties: false
+      required: [workloadId, suiteId, suiteInstanceId, workloadKind, name, image, status, containerId]
+      properties:
+        workloadId: { type: string }
+        suiteId: { type: string }
+        suiteInstanceId: { type: string }
+        workloadKind: { type: string }
+        name: { type: string }
+        image: { type: string }
+        status: { type: string }
+        containerId: { type: string }
+    DeleteWorkloadResponse:
+      type: object
+      additionalProperties: false
+      required: [deleted]
+      properties:
+        deleted: { type: boolean, const: true }
+    CaptureEndpoint:
+      type: object
+      additionalProperties: false
+      required: [endpointId, hostPort, protocol]
+      properties:
+        endpointId: { type: string }
+        hostPort: { type: integer, minimum: 1, maximum: 65535 }
+        protocol: { $ref: '#/components/schemas/WorkloadTransport' }
+    StartCaptureResponse:
+      type: object
+      additionalProperties: false
+      required: [captureId, status, endpoints]
+      properties:
+        captureId: { type: string }
+        status: { type: string }
+        endpoints: { type: array, minItems: 1, items: { $ref: '#/components/schemas/CaptureEndpoint' } }

@@ -1,0 +1,16 @@
+version: 1
+projects:
+  - id: veydeck
+    name: Veydeck
+    description: Veydeck 主控与节点执行面接口。
+    services:
+      - id: control-plane
+        name: 主控
+        description: Master 对 Web Console、节点和外部调用方提供的控制面接口。
+        spec: specs/veydeck/control-plane.yaml
+        order: 10
+      - id: agent
+        name: Agent
+        description: 通过 Master 代理访问的 Local Node 与 Node 执行面接口。
+        spec: specs/veydeck/agent.yaml
+        order: 20
