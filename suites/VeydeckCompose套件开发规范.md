@@ -485,6 +485,14 @@ permissions:
 2. 删除数据必须由用户在卸载时显式确认。
 3. 不允许挂载 `/`、`/etc`、`/usr`、`/var/lib/docker` 等高风险目录。
 
+### 平台分配的网站业务目录
+
+网站管理套件的业务数据固定保存在 `{VEYDECK_HOME}/data/www/websites`，Compose 部署文件仍位于 `{VEYDECK_HOME}/data/compose/suite/veydeck-websites`。
+
+`runtime.resources` 只声明 `engineService` 和 `managerService`，业务路径由平台根据套件 ID 分配，套件不能声明 `namespace` 或认领平台的 Compose 目录。Agent 通过 `VEYDECK_SUITE_DATA_DIR` 提供实际宿主机数据路径。
+
+目录归属记录用于重装接管和卸载清理。已有非空目录必须具备可验证的归属，接管需要显式授权；删除操作仅作用于归属匹配的平台分配目录。专用根目录和业务目录拒绝符号链接。
+
 ## 12. 配置与密钥
 
 `.env.example` 示例：
