@@ -26,6 +26,11 @@ Veydeck 是一个可扩展的分布式 Linux 主机运维平台，用于统一�
 
 协议仿真还依赖 [Veydeck 套件系统实现规范](suites/Veydeck套件系统实现规范.md)、[Veydeck Compose 套件开发规范](suites/VeydeckCompose套件开发规范.md) 和 [Veydeck 套件 SDK 设计规范](suites/Veydeck套件SDK设计规范.md) 中的 Suite Runtime 契约。
 
+## 套件中心文档
+
+- [Veydeck Compose 套件中心设计规范](suites/VeydeckCompose套件中心设计规范.md)
+- [Veydeck 套件中心多版本管理设计](suites/Veydeck套件中心多版本管理设计.md)：不可变版本包、节点实例绑定、安装任务和版本占用约束。
+
 ## 网站管理套件文档
 
 - [Veydeck 网站管理套件设计](suites/Veydeck网站管理套件设计.md)：Nginx 双容器架构、资源归属、服务控制、网站目录、证书和备份。

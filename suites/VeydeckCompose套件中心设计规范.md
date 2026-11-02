@@ -239,29 +239,30 @@ networks:
 
 ## 11. 数据模型
 
-主控侧建议新增表：
+主控将套件身份、不可变版本包与节点实例分开保存。完整接口和并发约束见 [套件中心多版本管理设计](Veydeck套件中心多版本管理设计.md)。
 
-### 11.1 `suite_catalog_items`
+### 11.1 `suite_catalog` 与 `suite_packages`
+
+`suite_catalog` 保存以 `suite_id` 为主键的套件身份；`suite_packages` 保存同一套件的多个不可变版本。
 
 | 字段 | 说明 |
 | --- | --- |
-| `id` | 主键。 |
-| `suite_id` | 全局套件 ID。 |
-| `name` | 展示名称。 |
-| `version` | 当前目录版本。 |
-| `summary` | 简短说明。 |
-| `source` | `builtin_catalog`、`local_import` 或 `remote_catalog`。 |
-| `manifest_json` | 解析后的 `suite.yaml`。 |
-| `package_path` | 本地包路径或缓存路径。 |
+| `package_id` | 版本包主键。 |
+| `suite_id` | 所属套件身份。 |
+| `version` | 包版本，与 `suite_id` 联合唯一，重复上传一律拒绝。 |
+| `name` / `summary` | 版本展示名称和说明。 |
+| `manifest_json` | 当前版本清单。 |
+| `package_json` | 当前版本文件快照。 |
 | `checksum` | 套件包摘要。 |
-| `created_at` / `updated_at` | 时间戳。 |
+| `created_at` / `updated_at` | 时间戳；导入后禁止覆盖更新。 |
 
 ### 11.2 `suite_instances`
 
 | 字段 | 说明 |
 | --- | --- |
-| `id` | 主键。 |
+| `instance_id` | 主键。 |
 | `suite_id` | 套件 ID。 |
+| `package_id` | 绑定的不可变版本包，清单和资源均从该包读取。 |
 | `version` | 已安装版本。 |
 | `platform_contract_version` | 安装时固化的平台运行契约版本。 |
 | `node_id` | 目标节点，本地节点固定为 `local`。 |
@@ -269,9 +270,10 @@ networks:
 | `status` | 生命周期状态。 |
 | `enabled` | 是否启用。 |
 | `install_config_json` | 安装时用户填写的配置。 |
-| `manifest_json` | 安装时锁定的清单内容。 |
 | `last_error` | 最近一次失败原因。 |
 | `installed_at` / `updated_at` | 时间戳。 |
+
+同一节点同一套件最多一个实例，不同节点可安装不同版本。安装任务持久化目标包身份、版本和校验值；任意状态实例或未结束任务均阻止删除所引用版本包。实例卸载只影响目标节点。
 
 ### 11.3 `suite_app_entries`
 
